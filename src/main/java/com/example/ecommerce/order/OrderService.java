@@ -14,6 +14,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.example.ecommerce.event.OrderCreatedEvent;
+import com.example.ecommerce.kafka.OrderEventProducer;
+
 @Service
 public class OrderService {
 
@@ -21,15 +24,19 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
 
+    private final OrderEventProducer orderEventProducer;
+
 
     public OrderService(
             OrderRepository orderRepository,
             UserRepository userRepository,
-            ProductRepository productRepository
+            ProductRepository productRepository,
+            OrderEventProducer orderEventProducer
     ) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
+        this.orderEventProducer = orderEventProducer;
     }
 
 
@@ -160,6 +167,16 @@ public class OrderService {
         //
         // Now save the complete Order.
         Order savedOrder = orderRepository.save(order);
+
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                savedOrder.getId(),
+                savedOrder.getUser().getId(),
+                savedOrder.getTotalAmount(),
+                savedOrder.getStatus().name(),
+                savedOrder.getCreatedAt()
+        );
+
+        orderEventProducer.publishOrderCreated(event);
 
 
         System.out.println(
