@@ -6,13 +6,21 @@ import java.util.List;
 
 import com.example.ecommerce.exception.ResourceNotFoundException;
 
+import com.example.ecommerce.vector.ProductEmbeddingSyncService;
+
 @Service
 public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public ProductService(ProductRepository productRepository) {
+    private final ProductEmbeddingSyncService productEmbeddingSyncService;
+
+    public ProductService(
+            ProductRepository productRepository,
+            ProductEmbeddingSyncService productEmbeddingSyncService
+    ) {
         this.productRepository = productRepository;
+        this.productEmbeddingSyncService = productEmbeddingSyncService;
     }
 
     public List<ProductResponse> getAllProducts() {
@@ -43,7 +51,12 @@ public class ProductService {
                 request.getStockQuantity()
         );
 
-        Product savedProduct = productRepository.save(product);
+        Product savedProduct =
+                productRepository.save(product);
+
+        productEmbeddingSyncService.syncProduct(
+                savedProduct.getId()
+        );
 
         return mapToResponse(savedProduct);
     }
@@ -74,6 +87,10 @@ public class ProductService {
 
         Product updatedProduct = productRepository.save(product);
 
+        productEmbeddingSyncService.syncProduct(
+                updatedProduct.getId()
+        );
+
         return mapToResponse(updatedProduct);
     }
 
@@ -85,6 +102,8 @@ public class ProductService {
                                 "Product not found with id: " + id
                         )
                 );
+
+        productEmbeddingSyncService.deleteProductEmbedding(id);
 
         productRepository.delete(product);
     }
