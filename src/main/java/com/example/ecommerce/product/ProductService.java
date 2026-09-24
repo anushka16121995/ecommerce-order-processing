@@ -8,19 +8,22 @@ import com.example.ecommerce.exception.ResourceNotFoundException;
 
 import com.example.ecommerce.vector.ProductEmbeddingSyncService;
 
+import com.example.ecommerce.kafka.ProductEmbeddingProducer;
+
 @Service
 public class ProductService {
 
     private final ProductRepository productRepository;
 
-    private final ProductEmbeddingSyncService productEmbeddingSyncService;
+    private final ProductEmbeddingProducer productEmbeddingProducer;
 
     public ProductService(
             ProductRepository productRepository,
-            ProductEmbeddingSyncService productEmbeddingSyncService
+            ProductEmbeddingProducer productEmbeddingProducer
     ) {
         this.productRepository = productRepository;
-        this.productEmbeddingSyncService = productEmbeddingSyncService;
+        this.productEmbeddingProducer =
+                productEmbeddingProducer;
     }
 
     public List<ProductResponse> getAllProducts() {
@@ -54,7 +57,7 @@ public class ProductService {
         Product savedProduct =
                 productRepository.save(product);
 
-        productEmbeddingSyncService.syncProduct(
+        productEmbeddingProducer.sendUpsertEvent(
                 savedProduct.getId()
         );
 
@@ -85,9 +88,10 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setStockQuantity(request.getStockQuantity());
 
-        Product updatedProduct = productRepository.save(product);
+        Product updatedProduct =
+                productRepository.save(product);
 
-        productEmbeddingSyncService.syncProduct(
+        productEmbeddingProducer.sendUpsertEvent(
                 updatedProduct.getId()
         );
 
@@ -103,8 +107,8 @@ public class ProductService {
                         )
                 );
 
-        productEmbeddingSyncService.deleteProductEmbedding(id);
-
         productRepository.delete(product);
+
+        productEmbeddingProducer.sendDeleteEvent(id);
     }
 }
