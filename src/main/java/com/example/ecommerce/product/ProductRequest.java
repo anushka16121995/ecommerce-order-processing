@@ -1,41 +1,34 @@
 package com.example.ecommerce.product;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
 
 public class ProductRequest {
 
-    @NotBlank
+    @NotBlank(message = "Product name is required")
     private String name;
 
-    @NotBlank
+    @NotBlank(message = "Product description is required")
     private String description;
 
-    @Positive
+    @NotNull(message = "Product price is required")
+    @DecimalMin(
+            value = "0.01",
+            message = "Product price must be greater than 0"
+    )
     private BigDecimal price;
 
-    @NotNull
-    @PositiveOrZero
+    @NotNull(message = "Stock quantity is required")
+    @Min(
+            value = 0,
+            message = "Stock quantity cannot be negative"
+    )
     private Integer stockQuantity;
 
-    public ProductRequest() {
-    }
-
-    public ProductRequest(
-            String name,
-            String description,
-            BigDecimal price,
-            Integer stockQuantity
-    ) {
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.stockQuantity = stockQuantity;
-    }
 
     public String getName() {
         return name;
@@ -45,6 +38,7 @@ public class ProductRequest {
         this.name = name;
     }
 
+
     public String getDescription() {
         return description;
     }
@@ -53,6 +47,7 @@ public class ProductRequest {
         this.description = description;
     }
 
+
     public BigDecimal getPrice() {
         return price;
     }
@@ -60,6 +55,7 @@ public class ProductRequest {
     public void setPrice(BigDecimal price) {
         this.price = price;
     }
+
 
     public Integer getStockQuantity() {
         return stockQuantity;
